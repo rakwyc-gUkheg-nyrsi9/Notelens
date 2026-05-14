@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>学习助手</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50:  '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95',
+            },
+          },
+          boxShadow: {
+            'soft':   '0 1px 2px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.06)',
+            'pop':    '0 10px 30px -10px rgba(124,58,237,0.35)',
+            'glow':   '0 0 0 4px rgba(167,139,250,0.18)',
+          },
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    }
+  </script>
+  <link rel="stylesheet" href="style.css?v=12" />
+</head>
+<body class="text-slate-800 font-sans antialiased min-h-screen">
+  <!-- Decorative background -->
+  <div class="bg-aurora" aria-hidden="true"></div>
+
+  <!-- Top bar -->
+  <header class="sticky top-0 z-30 backdrop-blur-xl bg-white/70 border-b border-slate-200/60">
+    <div class="max-w-7xl mx-auto px-5 h-16 flex items-center gap-4">
+      <button id="navHome" class="flex items-center gap-2 group">
+        <span class="logo-dot"></span>
+        <span class="text-[17px] font-bold tracking-tight group-hover:text-brand-600 transition">学习助手</span>
+      </button>
+      <nav class="ml-2 flex items-center gap-1 text-sm">
+        <button data-view="home"    class="nav-btn">主界面</button>
+        <button data-view="viewer"  class="nav-btn">笔记 / 标签</button>
+        <button data-view="mindmap" class="nav-btn">思维导图</button>
+        <button data-view="quiz"    class="nav-btn">AI 出题</button>
+      </nav>
+      <div class="ml-auto flex items-center gap-3">
+        <span id="currentPptName" class="hidden md:inline text-xs text-slate-500 max-w-[240px] truncate"></span>
+        <button id="openSettings" class="icon-btn" title="设置">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-5 py-8 relative">
+    <!-- =================== HOME =================== -->
+    <section id="view-home" class="view space-y-6">
+      <!-- Hero -->
+      <div class="card-hero">
+        <div class="relative z-10 max-w-2xl">
+          <div class="inline-flex items-center gap-2 text-xs font-medium text-brand-700 bg-white/60 backdrop-blur px-3 py-1 rounded-full border border-brand-200/50 mb-4">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
+            AI 驱动的学习工具
+          </div>
+          <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+            把课件变成<span class="text-gradient">高效复习材料</span>
+          </h1>
+          <p class="mt-3 text-slate-600 leading-relaxed">
+            上传课件 → AI 提取标签和易错点 → 一键生成思维导图 → 智能出题练习。
+          </p>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Upload card -->
+        <div class="lg:col-span-2 card">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="badge-num">1</span>
+            <h2 class="text-lg font-semibold">上传笔记</h2>
+          </div>
+          <p class="text-sm text-slate-500 mb-5">支持 .pptx · .pdf · .png · .jpg · .jpeg · .webp（多张图片按文件名顺序自动排序）</p>
+          <div id="dropZone" class="dropzone">
+            <div class="dropzone-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="text-slate-700 font-medium">拖拽文件到此处，或点击选择</div>
+            <div class="text-xs text-slate-400 mt-1.5">.pptx · .pdf · .png · .jpg · .jpeg · .webp</div>
+            <input id="fileInput" type="file" accept=".pptx,.pdf,image/*" multiple class="hidden" />
+          </div>
+          <div id="uploadStatus" class="text-sm text-slate-500 mt-3"></div>
+        </div>
+
+        <!-- Quick jump card -->
+        <div class="card">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="badge-num">2</span>
+            <h2 class="text-lg font-semibold">开始学习</h2>
+          </div>
+          <p class="text-sm text-slate-500 mb-5">选择一份笔记，跳转到任意功能。</p>
+          <select id="pptSelector" class="select-field mb-4">
+            <option value="">— 未选择 —</option>
+          </select>
+          <div class="grid grid-cols-1 gap-2.5">
+            <button data-view="viewer"  class="nav-btn jump-btn"><span class="jump-emoji">🏷️</span><div><div class="font-medium text-slate-800">笔记 / 标签</div><div class="text-xs text-slate-500">边读边做笔记</div></div></button>
+            <button data-view="mindmap" class="nav-btn jump-btn"><span class="jump-emoji">🧠</span><div><div class="font-medium text-slate-800">思维导图</div><div class="text-xs text-slate-500">看清知识结构</div></div></button>
+            <button data-view="quiz"    class="nav-btn jump-btn"><span class="jump-emoji">📝</span><div><div class="font-medium text-slate-800">AI 出题</div><div class="text-xs text-slate-500">基础 + 进阶</div></div></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PPT library -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">已上传的笔记</h2>
+          <span id="pptCount" class="text-xs text-slate-500"></span>
+        </div>
+        <div id="pptList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="pptListEmpty" class="hidden text-center py-12">
+          <div class="text-5xl mb-2 opacity-40">📂</div>
+          <p class="text-sm text-slate-400">还没有笔记，先上传一份吧。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== VIEWER (Interface 1) =================== -->
+    <section id="view-viewer" class="view hidden">
+      <div class="grid lg:grid-cols-12 gap-5">
+        <aside class="lg:col-span-4 card flex flex-col p-5" style="max-height: calc(100vh - 130px);">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="dot-indigo"></span>
+              <h3 class="font-semibold">本页标签</h3>
+            </div>
+            <button id="addManualTag" class="chip-btn">+ 手写</button>
+          </div>
+          <div id="tagList" class="space-y-2 overflow-y-auto pr-1 flex-1 min-h-[80px]"></div>
+          <div class="my-4 border-t border-slate-200/70"></div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="dot-amber"></span>
+              <h3 class="font-semibold">易错点 / 注意事项</h3>
+            </div>
+            <button id="addManualErr" class="chip-btn">+ 手写</button>
+          </div>
+          <div id="errList" class="space-y-2 overflow-y-auto pr-1 flex-1 min-h-[80px]"></div>
+          <div class="my-4 border-t border-slate-200/70"></div>
+          <div class="flex items-center justify-between mb-2 flex-wrap gap-1">
+            <div class="flex items-center gap-2">
+              <span class="dot-violet"></span>
+              <h3 class="font-semibold">课堂记录</h3>
+            </div>
+            <div class="flex items-center gap-1">
+              <button id="voiceToggle" class="chip-btn hidden" title="实时语音（仅在浏览器原生支持时显示）">🎤 实时</button>
+              <button id="audioUploadBtn" class="chip-btn" title="录一段或选已有音频，AI 转写">📁 录音 / 上传</button>
+              <input id="audioFileInput" type="file" accept="audio/*" capture="microphone" class="hidden" />
+            </div>
+          </div>
+          <textarea id="notesArea" rows="4" placeholder="可手写，或点 📁 录一段语音让 AI 转写…" class="textarea-field text-sm" style="min-height:90px;"></textarea>
+          <div id="voiceStatus" class="text-xs text-slate-400 mt-1 min-h-[1em]"></div>
+        </aside>
+
+        <div class="lg:col-span-8 card flex flex-col p-5" style="max-height: calc(100vh - 130px);">
+          <div class="flex items-center gap-2 mb-4">
+            <button id="prevSlide" class="btn-ghost">‹ 上一页</button>
+            <span id="slideIndicator" class="text-sm font-medium text-slate-600 px-2"></span>
+            <button id="nextSlide" class="btn-ghost">下一页 ›</button>
+            <div class="ml-auto hidden md:flex items-center gap-1.5 text-xs text-slate-500 bg-brand-50 border border-brand-100 rounded-full px-3 py-1">
+              <span>💡</span>选中文本即可生成标签 / 易错点
+            </div>
+          </div>
+          <div id="slideArea" class="flex-1 overflow-y-auto rounded-xl p-5 bg-gradient-to-br from-slate-50 to-white border border-slate-200/60">
+            <div class="text-slate-400 text-sm">未选择 PPT。</div>
+          </div>
+          <div id="selectionToolbar" class="hidden fixed z-40 selection-toolbar">
+            <button data-action="tag">🏷️ 生成标签</button>
+            <button data-action="err">⚠️ 易错点</button>
+            <button data-action="explain">💡 解释</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== MINDMAP (Interface 2) =================== -->
+    <section id="view-mindmap" class="view hidden">
+      <div class="grid lg:grid-cols-12 gap-5">
+        <aside class="lg:col-span-4 card p-5" style="max-height: calc(100vh - 130px); overflow-y: auto;">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="dot-indigo"></span>
+            <h3 class="font-semibold">标签总览</h3>
+            <span class="text-xs text-slate-400">点击多选</span>
+          </div>
+          <div class="flex items-center gap-2 mb-3 text-xs">
+            <button id="selectAllTagsCurrent" class="chip-btn">全选当前 PPT</button>
+            <button id="clearSelectedTags"   class="chip-btn">清空</button>
+          </div>
+          <div id="tagOverview" class="space-y-3"></div>
+        </aside>
+        <div class="lg:col-span-8 card p-5" style="max-height: calc(100vh - 130px); overflow-y: auto;">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="dot-violet"></span>
+            <h3 class="font-semibold">思维导图</h3>
+            <span id="seedCount" class="text-xs text-slate-500"></span>
+            <button id="genMindmap" class="ml-auto btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              <span>🤖</span> 生成思维导图
+            </button>
+          </div>
+          <div id="seedSummary" class="mb-3 text-xs text-slate-500"></div>
+          <div id="mindmapArea" class="min-h-[420px] rounded-xl p-6 bg-gradient-to-br from-brand-50/40 to-white border border-slate-200/60 text-sm">
+            <div class="text-center py-10 text-slate-400">
+              <div class="text-5xl mb-3 opacity-50">🧠</div>
+              <p>左侧勾选<span class="font-medium text-brand-600">一个或多个标签</span>，再点右上「生成思维导图」。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== QUIZ (Interface 3) =================== -->
+    <section id="view-quiz" class="view hidden">
+      <div id="quizPicker" class="grid md:grid-cols-2 gap-6">
+        <button class="quiz-mode-btn quiz-basic" data-mode="basic">
+          <div class="quiz-icon">🎯</div>
+          <div class="quiz-title">基础版</div>
+          <div class="quiz-desc">指定知识点 / 标签<br/>由 AI 出针对性题目</div>
+          <div class="quiz-arrow">→</div>
+        </button>
+        <button class="quiz-mode-btn quiz-advanced" data-mode="advanced">
+          <div class="quiz-icon">🎲</div>
+          <div class="quiz-title">进阶版</div>
+          <div class="quiz-desc">AI 识别全部知识点<br/>随机出题 · 含标签跳转</div>
+          <div class="quiz-arrow">→</div>
+        </button>
+      </div>
+
+      <div id="quizBasic" class="hidden card p-6">
+        <button class="back-to-picker btn-back">← 返回选择</button>
+        <h2 class="text-2xl font-bold mb-2 mt-3">🎯 基础版 · 指定知识点出题</h2>
+        <p class="text-sm text-slate-500 mb-5">从已有标签中选择一个，AI 会基于该知识点和原文出题。</p>
+        <div id="basicTagList" class="flex flex-wrap gap-2 mb-5"></div>
+        <button id="basicGenerate" class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+          <span>🤖</span> 出题
+        </button>
+        <div id="basicQuestionArea" class="mt-6"></div>
+      </div>
+
+      <div id="quizAdvanced" class="hidden card p-6">
+        <button class="back-to-picker btn-back">← 返回选择</button>
+        <h2 class="text-2xl font-bold mb-2 mt-3">🎲 进阶版 · 随机出题</h2>
+        <p class="text-sm text-slate-500 mb-5">AI 自动识别整个 PPT 的知识点，从中随机选择出题。</p>
+        <button id="advancedGenerate" class="btn-primary">
+          <span>🎲</span> 随机出题
+        </button>
+        <div id="advancedQuestionArea" class="mt-6"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating AI ask button -->
+  <button id="askAiFab" class="fab" title="向 AI 提问">
+    <span class="fab-pulse"></span>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  </button>
+
+  <!-- AI ask drawer -->
+  <div id="aiPanel" class="hidden ai-overlay">
+    <div class="ai-drawer">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/70">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm">🤖</div>
+          <div>
+            <h3 class="font-semibold leading-tight">AI 助手</h3>
+            <p class="text-xs text-slate-500">基于当前 PPT 上下文回答</p>
+          </div>
+        </div>
+        <button id="closeAi" class="icon-btn" title="关闭">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="aiHistory" class="flex-1 overflow-y-auto px-5 py-4 space-y-3 text-sm"></div>
+      <div class="border-t border-slate-200/70 p-3 flex gap-2 bg-white">
+        <textarea id="aiInput" rows="2" placeholder="基于当前 PPT 提问…  ⌘/Ctrl + Enter 发送" class="textarea-field"></textarea>
+        <button id="aiSend" class="btn-primary self-stretch px-5">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="hidden modal-overlay">
+    <div class="modal-card">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200/70">
+        <div class="flex items-center gap-2">
+          <span>⚙️</span>
+          <h3 class="font-semibold">设置</h3>
+        </div>
+        <button id="closeSettings" class="icon-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4 text-sm">
+        <div>
+          <label class="form-label">AI 服务商 <span class="text-slate-400 font-normal">— 选择后自动填好 Endpoint</span></label>
+          <div id="providerChips" class="flex flex-wrap gap-1.5 mb-2"></div>
+          <select id="aiProvider" class="select-field"></select>
+        </div>
+        <div>
+          <div class="flex items-center justify-between">
+            <label class="form-label !mb-0">API Endpoint</label>
+            <a id="providerKeyLink" href="#" target="_blank" rel="noopener" class="text-xs text-brand-600 hover:text-brand-700 hidden">获取 Key ↗</a>
+          </div>
+          <input id="aiEndpoint" type="text" class="input-field mt-1.5" placeholder="https://..." />
+        </div>
+        <div>
+          <label class="form-label">API Key</label>
+          <input id="aiKey" type="password" class="input-field" placeholder="API Key" />
+          <p class="text-xs text-slate-400 mt-1.5">🔒 仅保存在浏览器本地，不会上传到任何服务器。</p>
+        </div>
+        <div>
+          <label class="form-label">模型 / Endpoint ID</label>
+          <input id="aiModel" type="text" class="input-field" placeholder="模型名" />
+          <div id="modelChips" class="flex flex-wrap gap-1.5 mt-2"></div>
+          <p id="modelHint" class="text-xs text-slate-400 mt-1.5"></p>
+        </div>
+        <div class="flex flex-wrap gap-2 pt-2 items-center">
+          <button id="saveSettings" class="btn-primary">保存</button>
+          <button id="testAi" class="btn-ghost">测试连接</button>
+          <button id="resetSettings" class="btn-ghost" title="恢复为站点预置 (Qwen)">恢复默认</button>
+          <button id="clearAll" class="ml-auto text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-lg text-sm font-medium transition">清空全部数据</button>
+        </div>
+        <div id="settingsMsg" class="text-xs text-slate-500 min-h-[1em]"></div>
+        <div class="border-t border-slate-200/70 pt-3 mt-2 text-xs text-slate-500 flex items-center justify-between">
+          <span>版本 <span class="font-mono text-brand-700">v12 · 文案统一</span></span>
+          <span id="storageInfo" class="text-slate-400">检查存储…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-24 right-6 z-50 bg-slate-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-xl"></div>
+
+  <script src="idb.js?v=12"></script>
+  <script src="ai.js?v=12"></script>
+  <script src="pptParser.js?v=12"></script>
+  <script src="app.js?v=12"></script>
+</body>
+</html>
